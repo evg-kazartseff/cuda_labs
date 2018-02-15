@@ -27,7 +27,7 @@ __global__ void Init(float *a) {
 
 int main(int argc, char **argv) {
 	float *da, *ha;
-	int nob = 10, tpb = 1024;
+	int nob = atoi(argv[1]), tpb = 1024;
 	int N = nob * tpb;
 	cudaEvent_t start, stop;
 	cudaEventCreate(&start);
@@ -40,15 +40,17 @@ int main(int argc, char **argv) {
 	cudaEventRecord(start, 0);
 	Init<<<dim3(nob), dim3(tpb)>>>(da);
 	cudaEventRecord(stop, 0);
-	CCHECK(cudaDeviceSynchronize());
+	cudaEventSynchronize(stop);
+
+	//CCHECK(cudaDeviceSynchronize());
 
 	CCHECK(cudaGetLastError());
 	CCHECK(cudaMemcpy(ha, da, N * sizeof(float), cudaMemcpyDeviceToHost));
 	cudaEventElapsedTime(&elapsedTime, start, stop);
-	printf("Elapsed time %g\n", elapsedTime);
+	printf("Elapsed time %gms\n", elapsedTime);
 
 	for (int i = 0; i < N; ++i) {
-		printf("%d%c", ha[i], (i % 30 == 0 || i == (N - 1)? '\n' : ' '));
+		// printf("%d%c", ha[i], (i % 30 == 0 || i == (N - 1)? '\n' : ' '));
 	}
 	printf("End\n");
 	cudaEventDestroy(start);
